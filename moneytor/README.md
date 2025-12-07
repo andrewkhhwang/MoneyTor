@@ -1,36 +1,87 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MoneyTor
 
-## Getting Started
+MoneyTor is a modern, personal finance tracker designed to give you complete control over your financial life. It combines the flexibility of manual tracking with the convenience of automated bank synchronization via Plaid.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **📊 Real-time Dashboard**: Get an instant overview of your Income, Expenses, Net Flow, and Net Worth.
+- **🏦 Bank Integration**: Securely connect your bank accounts using **Plaid** to automatically import balances and transactions.
+- **📝 Manual Tracking**: Manually add cash accounts and transactions for complete coverage.
+- **💰 Budgeting**: Set monthly budgets for specific categories and track your spending progress visually.
+- **🏷️ Categorization**: Organize your transactions with custom categories.
+- **🔒 Secure**: Built with **Supabase Auth** and **Row Level Security (RLS)** to ensure your data is private and secure.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Usage
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Prerequisites
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Node.js 18+
+- A Supabase Project
+- A Plaid Developer Account
 
-## Learn More
+### Installation
 
-To learn more about Next.js, take a look at the following resources:
+1.  **Clone the repository:**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+    ```bash
+    git clone https://github.com/yourusername/moneytor.git
+    cd moneytor
+    ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2.  **Install dependencies:**
 
-## Deploy on Vercel
+    ```bash
+    npm install
+    ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3.  **Environment Setup:**
+    Create a `.env.local` file in the root directory and add your credentials:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+    ```env
+    NEXT_PUBLIC_SUPABASE_URL="your_supabase_url"
+    NEXT_PUBLIC_SUPABASE_ANON_KEY="your_supabase_anon_key"
+
+    PLAID_CLIENT_ID="your_plaid_client_id"
+    PLAID_SECRET="your_plaid_secret"
+    PLAID_ENV="sandbox" # Change to 'development' or 'production' for real data
+    ```
+
+4.  **Database Setup:**
+    Run the provided `supabase_schema.sql` script in your Supabase SQL Editor to create the necessary tables and security policies.
+
+5.  **Run the App:**
+    ```bash
+    npm run dev
+    ```
+    Open [http://localhost:3000](http://localhost:3000) to start tracking!
+
+## Important Notices
+
+- **Plaid Sandbox**: By default, the app is configured for Plaid's **Sandbox** environment. Use the username `user_good` and password `pass_good` to test bank connections.
+- **Data Privacy**: All data is stored in your own Supabase project. Row Level Security (RLS) policies are enforced so users can only access their own data.
+
+## FAQs
+
+### Q: Why am I getting a "Could not authenticate user" error?
+
+**A:** This usually happens if the email confirmation link has expired or is invalid. Try logging in again to receive a new link, and click it immediately.
+
+### Q: Why isn't my bank data syncing?
+
+**A:**
+
+1.  Check your console logs for errors.
+2.  Ensure your `PLAID_CLIENT_ID` and `PLAID_SECRET` are correct in `.env.local`.
+3.  Verify that you are using the correct `PLAID_ENV` (Sandbox vs. Development).
+
+### Q: Can I use this with real bank accounts?
+
+**A:** Yes! To use real data, you need to:
+
+1.  Get access to Plaid's **Development** or **Production** environment.
+2.  Update `PLAID_ENV` in your `.env.local` file.
+3.  Update your `PLAID_SECRET` to the corresponding environment secret.
+
+### Q: I see the Next.js welcome page instead of my Dashboard.
+
+**A:** If `app/page.tsx` exists, it overrides the dashboard layout at the root URL (`/`). Delete `app/page.tsx` if you want the Dashboard to be your home page.

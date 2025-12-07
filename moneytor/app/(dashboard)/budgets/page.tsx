@@ -1,5 +1,8 @@
 import { createClient } from '@/utils/supabase/server'
 import { createBudget } from './actions'
+import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { formatCurrency } from '@/lib/utils'
 
 export default async function BudgetsPage({
   searchParams,
@@ -24,8 +27,6 @@ export default async function BudgetsPage({
     .eq('period', period)
 
   // Fetch actual spending for each category in this period
-  // Note: This is a bit complex in pure Supabase JS client without aggregation functions easily available on the client side without RPC.
-  // We will fetch all expense transactions for this month and aggregate in JS for now.
   const startDate = `${period}-01`
   const endDate = `${period}-31` // Simple approximation
 
@@ -55,11 +56,14 @@ export default async function BudgetsPage({
     .order('name')
 
   return (
-    <div>
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-gray-900">Budgets</h1>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-white">Budgets</h1>
+          <p className="mt-2 text-zinc-400">Set monthly spending limits for your categories.</p>
+        </div>
         <div className="flex items-center gap-2">
-          <label htmlFor="period" className="text-sm font-medium text-gray-700">
+          <label htmlFor="period" className="text-sm font-medium text-zinc-400">
             Period:
           </label>
           <form>
@@ -71,7 +75,7 @@ export default async function BudgetsPage({
                 // In a real app, use router.push or a client component to update URL
                 // For now, this is just a placeholder for the concept
               }}
-              className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-white focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 sm:text-sm [color-scheme:dark]"
             />
             <button type="submit" className="hidden">
               Go
@@ -80,13 +84,13 @@ export default async function BudgetsPage({
         </div>
       </div>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-3">
+      <div className="grid gap-8 lg:grid-cols-3">
         {/* Budget List */}
         <div className="lg:col-span-2 space-y-4">
           {budgets?.length === 0 ? (
-            <div className="rounded-lg bg-white p-6 shadow">
-              <p className="text-gray-500">No budgets set for this period.</p>
-            </div>
+            <Card>
+              <p className="text-zinc-500">No budgets set for this period.</p>
+            </Card>
           ) : (
             budgets?.map((budget) => {
               const spent = spendingByCategory[budget.category_id] || 0
@@ -94,48 +98,48 @@ export default async function BudgetsPage({
               const remaining = Number(budget.amount) - spent
 
               return (
-                <div key={budget.id} className="rounded-lg bg-white p-6 shadow">
+                <Card key={budget.id}>
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium text-gray-900">
+                    <h3 className="text-lg font-medium text-white">
                       {budget.category?.name}
                     </h3>
-                    <p className="text-sm text-gray-500">
-                      ${spent.toFixed(2)} of ${Number(budget.amount).toFixed(2)}
+                    <p className="text-sm text-zinc-400">
+                      {formatCurrency(spent)} of {formatCurrency(Number(budget.amount))}
                     </p>
                   </div>
-                  <div className="mt-2 relative pt-1">
-                    <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-200">
+                  <div className="mt-4 relative pt-1">
+                    <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-zinc-800">
                       <div
                         style={{ width: `${progress}%` }}
-                        className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center ${
+                        className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-500 ${
                           progress > 90
-                            ? 'bg-red-500'
+                            ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]'
                             : progress > 75
-                            ? 'bg-yellow-500'
-                            : 'bg-green-500'
+                            ? 'bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]'
+                            : 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]'
                         }`}
                       ></div>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-500 text-right">
-                    ${remaining.toFixed(2)} remaining
+                  <p className="text-sm text-zinc-500 text-right">
+                    {formatCurrency(remaining)} remaining
                   </p>
-                </div>
+                </Card>
               )
             })
           )}
         </div>
 
         {/* Add Budget Form */}
-        <div className="rounded-lg bg-white p-6 shadow h-fit">
-          <h2 className="text-lg font-medium text-gray-900">Set Budget</h2>
-          <form action={createBudget} className="mt-4 space-y-4">
+        <Card className="h-fit">
+          <h2 className="text-xl font-semibold text-white">Set Budget</h2>
+          <form action={createBudget} className="mt-6 space-y-4">
             <input type="hidden" name="period" value={period} />
 
             <div>
               <label
                 htmlFor="categoryId"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-zinc-400"
               >
                 Category
               </label>
@@ -143,7 +147,7 @@ export default async function BudgetsPage({
                 name="categoryId"
                 id="categoryId"
                 required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="mt-1 block w-full rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-white focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 sm:text-sm"
               >
                 {categories?.map((category) => (
                   <option key={category.id} value={category.id}>
@@ -156,13 +160,13 @@ export default async function BudgetsPage({
             <div>
               <label
                 htmlFor="amount"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-zinc-400"
               >
                 Budget Amount
               </label>
               <div className="relative mt-1 rounded-md shadow-sm">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <span className="text-gray-500 sm:text-sm">$</span>
+                  <span className="text-zinc-500 sm:text-sm">$</span>
                 </div>
                 <input
                   type="number"
@@ -170,20 +174,17 @@ export default async function BudgetsPage({
                   id="amount"
                   step="0.01"
                   required
-                  className="block w-full rounded-md border-gray-300 pl-7 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  className="block w-full rounded-lg border border-white/10 bg-black/50 pl-7 px-3 py-2 text-white placeholder-zinc-600 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 sm:text-sm"
                   placeholder="0.00"
                 />
               </div>
             </div>
 
-            <button
-              type="submit"
-              className="flex w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            >
+            <Button type="submit" className="w-full">
               Set Budget
-            </button>
+            </Button>
           </form>
-        </div>
+        </Card>
       </div>
     </div>
   )

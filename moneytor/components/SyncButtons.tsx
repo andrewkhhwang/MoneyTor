@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { RefreshCw } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
 
 export default function SyncButtons() {
   const [loading, setLoading] = useState(false)
@@ -25,15 +26,15 @@ export default function SyncButtons() {
   }
 
   return (
-    <button
+    <Button
       onClick={handleSync}
       disabled={loading}
-      className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
+      variant="secondary"
     >
       <RefreshCw
         className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`}
       />
       {loading ? 'Syncing...' : 'Sync Data'}
-    </button>
+    </Button>
   )
 }

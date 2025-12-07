@@ -1,5 +1,8 @@
 import { createClient } from '@/utils/supabase/server'
 import { createTransaction } from './actions'
+import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { formatCurrency } from '@/lib/utils'
 
 export default async function TransactionsPage() {
   const supabase = await createClient()
@@ -32,46 +35,47 @@ export default async function TransactionsPage() {
     .order('name')
 
   return (
-    <div>
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-gray-900">Transactions</h1>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-white">Transactions</h1>
+        <p className="mt-2 text-zinc-400">View and manage your income and expenses.</p>
       </div>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-3">
+      <div className="grid gap-8 lg:grid-cols-3">
         {/* Transaction List */}
-        <div className="lg:col-span-2 rounded-lg bg-white p-6 shadow">
-          <h2 className="text-lg font-medium text-gray-900">Recent Transactions</h2>
-          <div className="mt-4 flow-root">
-            <ul className="-my-5 divide-y divide-gray-200">
+        <Card className="lg:col-span-2 p-0">
+          <div className="p-6 pb-4">
+            <h2 className="text-xl font-semibold text-white">Recent Transactions</h2>
+          </div>
+          <div className="overflow-hidden">
+            <ul className="divide-y divide-white/5">
               {transactions?.length === 0 ? (
-                <li className="py-5">
-                  <p className="text-gray-500">No transactions found.</p>
+                <li className="p-6 text-center text-zinc-500">
+                  No transactions found.
                 </li>
               ) : (
                 transactions?.map((transaction) => (
-                  <li key={transaction.id} className="py-4">
-                    <div className="flex items-center space-x-4">
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-gray-900">
-                          {transaction.description || 'No description'}
+                  <li key={transaction.id} className="p-6 transition-colors hover:bg-white/5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div>
+                          <p className="text-sm font-medium text-white">
+                            {transaction.description || 'No description'}
+                          </p>
+                          <p className="text-sm text-zinc-500">
+                            {transaction.category?.name || 'Uncategorized'} • {transaction.account?.name}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <p className={`text-sm font-medium ${
+                          transaction.type === 'income' ? 'text-green-500' : 'text-red-500'
+                        }`}>
+                          {transaction.type === 'income' ? '+' : '-'}{formatCurrency(Number(transaction.amount)).replace('$', '')}
                         </p>
-                        <p className="truncate text-sm text-gray-500">
-                          {transaction.category?.name || 'Uncategorized'} •{' '}
-                          {transaction.account?.name} •{' '}
+                        <p className="text-sm text-zinc-500">
                           {new Date(transaction.date).toLocaleDateString()}
                         </p>
-                      </div>
-                      <div>
-                        <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            transaction.type === 'income'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          {transaction.type === 'income' ? '+' : '-'}$
-                          {transaction.amount.toFixed(2)}
-                        </span>
                       </div>
                     </div>
                   </li>
@@ -79,16 +83,16 @@ export default async function TransactionsPage() {
               )}
             </ul>
           </div>
-        </div>
+        </Card>
 
         {/* Add Transaction Form */}
-        <div className="rounded-lg bg-white p-6 shadow h-fit">
-          <h2 className="text-lg font-medium text-gray-900">Add Transaction</h2>
-          <form action={createTransaction} className="mt-4 space-y-4">
+        <Card className="h-fit">
+          <h2 className="text-xl font-semibold text-white">Add Transaction</h2>
+          <form action={createTransaction} className="mt-6 space-y-4">
             <div>
               <label
                 htmlFor="description"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-zinc-400"
               >
                 Description
               </label>
@@ -97,7 +101,7 @@ export default async function TransactionsPage() {
                 name="description"
                 id="description"
                 required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="mt-1 block w-full rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-white placeholder-zinc-600 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 sm:text-sm"
               />
             </div>
 
@@ -105,13 +109,13 @@ export default async function TransactionsPage() {
               <div>
                 <label
                   htmlFor="amount"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-zinc-400"
                 >
                   Amount
                 </label>
                 <div className="relative mt-1 rounded-md shadow-sm">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <span className="text-gray-500 sm:text-sm">$</span>
+                    <span className="text-zinc-500 sm:text-sm">$</span>
                   </div>
                   <input
                     type="number"
@@ -119,7 +123,7 @@ export default async function TransactionsPage() {
                     id="amount"
                     step="0.01"
                     required
-                    className="block w-full rounded-md border-gray-300 pl-7 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="block w-full rounded-lg border border-white/10 bg-black/50 pl-7 px-3 py-2 text-white placeholder-zinc-600 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 sm:text-sm"
                     placeholder="0.00"
                   />
                 </div>
@@ -128,7 +132,7 @@ export default async function TransactionsPage() {
               <div>
                 <label
                   htmlFor="date"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-zinc-400"
                 >
                   Date
                 </label>
@@ -138,7 +142,7 @@ export default async function TransactionsPage() {
                   id="date"
                   required
                   defaultValue={new Date().toISOString().split('T')[0]}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  className="mt-1 block w-full rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-white placeholder-zinc-600 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 sm:text-sm [color-scheme:dark]"
                 />
               </div>
             </div>
@@ -146,14 +150,14 @@ export default async function TransactionsPage() {
             <div>
               <label
                 htmlFor="type"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-zinc-400"
               >
                 Type
               </label>
               <select
                 name="type"
                 id="type"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="mt-1 block w-full rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-white focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 sm:text-sm"
               >
                 <option value="expense">Expense</option>
                 <option value="income">Income</option>
@@ -163,7 +167,7 @@ export default async function TransactionsPage() {
             <div>
               <label
                 htmlFor="accountId"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-zinc-400"
               >
                 Account
               </label>
@@ -171,7 +175,7 @@ export default async function TransactionsPage() {
                 name="accountId"
                 id="accountId"
                 required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="mt-1 block w-full rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-white focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 sm:text-sm"
               >
                 {accounts?.map((account) => (
                   <option key={account.id} value={account.id}>
@@ -184,14 +188,14 @@ export default async function TransactionsPage() {
             <div>
               <label
                 htmlFor="categoryId"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-zinc-400"
               >
                 Category
               </label>
               <select
                 name="categoryId"
                 id="categoryId"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="mt-1 block w-full rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-white focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 sm:text-sm"
               >
                 <option value="">Uncategorized</option>
                 {categories?.map((category) => (
@@ -202,14 +206,11 @@ export default async function TransactionsPage() {
               </select>
             </div>
 
-            <button
-              type="submit"
-              className="flex w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            >
+            <Button type="submit" className="w-full">
               Add Transaction
-            </button>
+            </Button>
           </form>
-        </div>
+        </Card>
       </div>
     </div>
   )

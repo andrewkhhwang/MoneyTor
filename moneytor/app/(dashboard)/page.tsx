@@ -1,5 +1,8 @@
 import { createClient } from '@/utils/supabase/server'
 import { ArrowDownIcon, ArrowUpIcon, WalletIcon } from 'lucide-react'
+import { Card } from '@/components/ui/Card'
+import { formatCurrency } from '@/lib/utils'
+import { NetWorthChart } from '@/components/NetWorthChart'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -11,8 +14,8 @@ export default async function DashboardPage() {
   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString()
   const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString()
 
-  // Fetch transactions for current month
-  const { data: transactions } = await supabase
+  // Fetch transactions for current month (for stats)
+  const { data: currentMonthTransactions } = await supabase
     .from('transactions')
     .select('*')
     .eq('user_id', user?.id)
@@ -20,11 +23,11 @@ export default async function DashboardPage() {
     .lte('date', endOfMonth)
 
   // Calculate totals
-  const income = transactions
+  const income = currentMonthTransactions
     ?.filter((t) => t.type === 'income')
     .reduce((sum, t) => sum + Number(t.amount), 0) || 0
 
-  const expenses = transactions
+  const expenses = currentMonthTransactions
     ?.filter((t) => t.type === 'expense')
     .reduce((sum, t) => sum + Number(t.amount), 0) || 0
 
@@ -36,131 +39,130 @@ export default async function DashboardPage() {
     .select('current_balance, type')
     .eq('user_id', user?.id)
 
-  const netWorth = accounts?.reduce((sum, a) => {
-    // Simple logic: credit cards and loans are liabilities (negative)
-    // In our schema, balances might be stored as positive numbers, so we need to subtract liabilities
-    // However, usually credit card balance is positive representing debt.
-    // Let's assume 'credit_card' and 'loan' are liabilities.
+  const currentNetWorth = accounts?.reduce((sum, a) => {
     if (['credit_card', 'loan'].includes(a.type)) {
       return sum - Number(a.current_balance)
     }
     return sum + Number(a.current_balance)
   }, 0) || 0
 
-  // Fetch recent transactions
-  const { data: recentTransactions } = await supabase
+  // Fetch transactions for last 30 days (for chart)
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+  
+  const { data: historyTransactions } = await supabase
     .from('transactions')
-    .select(`
-      *,
-      category:categories(name),
-      account:accounts(name)
-    `)
+    .select('amount, type, date')
     .eq('user_id', user?.id)
-    .order('date', { ascending: false })
-    .limit(5)
+    .gte('date', thirtyDaysAgo.toISOString())
+    .order('date', { ascending: true })
+
+  // Calculate daily net worth
+  const chartData = []
+  let runningBalance = currentNetWorth
+
+  // We iterate backwards from today to 30 days ago
+  for (let i = 0; i < 30; i++) {
+    const date = new Date()
+    date.setDate(date.getDate() - i)
+    const dateStr = date.toISOString().split('T')[0]
+    
+    // Add point for end of this day
+    chartData.unshift({
+      date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      amount: runningBalance
+    })
+
+    // Adjust running balance for the previous day
+    // To go back in time: subtract income, add expense
+    const dayTransactions = historyTransactions?.filter(t => 
+      t.date.startsWith(dateStr)
+    ) || []
+
+    const dayIncome = dayTransactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + Number(t.amount), 0)
+    
+    const dayExpense = dayTransactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + Number(t.amount), 0)
+
+    runningBalance = runningBalance - dayIncome + dayExpense
+  }
 
   return (
-    <div>
-      <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-white">Dashboard</h1>
+        <p className="mt-2 text-zinc-400">Overview of your financial health.</p>
+      </div>
       
       {/* Stats Grid */}
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg bg-white p-6 shadow">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="relative overflow-hidden">
+          <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-green-500/10 blur-2xl" />
           <div className="flex items-center">
-            <div className="rounded-md bg-green-100 p-3">
-              <ArrowUpIcon className="h-6 w-6 text-green-600" />
+            <div className="rounded-lg bg-green-500/10 p-3">
+              <ArrowUpIcon className="h-6 w-6 text-green-500" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Income</p>
-              <p className="text-lg font-semibold text-gray-900">
-                ${income.toFixed(2)}
+              <p className="text-sm font-medium text-zinc-400">Income</p>
+              <p className="text-2xl font-bold text-green-500">
+                {formatCurrency(income)}
               </p>
             </div>
           </div>
-        </div>
+        </Card>
 
-        <div className="rounded-lg bg-white p-6 shadow">
+        <Card className="relative overflow-hidden">
+          <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-red-500/10 blur-2xl" />
           <div className="flex items-center">
-            <div className="rounded-md bg-red-100 p-3">
-              <ArrowDownIcon className="h-6 w-6 text-red-600" />
+            <div className="rounded-lg bg-red-500/10 p-3">
+              <ArrowDownIcon className="h-6 w-6 text-red-500" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Expenses</p>
-              <p className="text-lg font-semibold text-gray-900">
-                ${expenses.toFixed(2)}
+              <p className="text-sm font-medium text-zinc-400">Expenses</p>
+              <p className="text-2xl font-bold text-red-500">
+                {formatCurrency(expenses)}
               </p>
             </div>
           </div>
-        </div>
+        </Card>
 
-        <div className="rounded-lg bg-white p-6 shadow">
+        <Card className="relative overflow-hidden">
+          <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-blue-500/10 blur-2xl" />
           <div className="flex items-center">
-            <div className="rounded-md bg-blue-100 p-3">
-              <WalletIcon className="h-6 w-6 text-blue-600" />
+            <div className="rounded-lg bg-blue-500/10 p-3">
+              <WalletIcon className="h-6 w-6 text-blue-500" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Net Flow</p>
-              <p className={`text-lg font-semibold ${net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                ${net.toFixed(2)}
+              <p className="text-sm font-medium text-zinc-400">Net Flow</p>
+              <p className={`text-2xl font-bold ${net >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {formatCurrency(net)}
               </p>
             </div>
           </div>
-        </div>
+        </Card>
 
-        <div className="rounded-lg bg-white p-6 shadow">
+        <Card className="relative overflow-hidden border-violet-500/20 bg-violet-500/5">
+          <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-violet-500/20 blur-2xl" />
           <div className="flex items-center">
-            <div className="rounded-md bg-purple-100 p-3">
-              <WalletIcon className="h-6 w-6 text-purple-600" />
+            <div className="rounded-lg bg-violet-500/10 p-3">
+              <WalletIcon className="h-6 w-6 text-violet-500" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Net Worth</p>
-              <p className="text-lg font-semibold text-gray-900">
-                ${netWorth.toFixed(2)}
+              <p className="text-sm font-medium text-zinc-400">Net Worth</p>
+              <p className="text-2xl font-bold text-white">
+                {formatCurrency(currentNetWorth)}
               </p>
             </div>
           </div>
-        </div>
+        </Card>
       </div>
 
-      {/* Recent Transactions */}
-      <div className="mt-8">
-        <h2 className="text-lg font-medium text-gray-900">Recent Transactions</h2>
-        <div className="mt-4 overflow-hidden rounded-lg bg-white shadow">
-          <ul className="divide-y divide-gray-200">
-            {recentTransactions?.length === 0 ? (
-              <li className="p-6 text-center text-gray-500">
-                No recent transactions
-              </li>
-            ) : (
-              recentTransactions?.map((transaction) => (
-                <li key={transaction.id} className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="ml-4">
-                        <p className="text-sm font-medium text-gray-900">
-                          {transaction.description}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {transaction.category?.name || 'Uncategorized'} • {transaction.account?.name}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      <p className={`text-sm font-medium ${
-                        transaction.type === 'income' ? 'text-green-600' : 'text-gray-900'
-                      }`}>
-                        {transaction.type === 'income' ? '+' : '-'}${Number(transaction.amount).toFixed(2)}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {new Date(transaction.date).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                </li>
-              ))
-            )}
-          </ul>
-        </div>
+      {/* Net Worth Chart */}
+      <div className="space-y-4">
+        <NetWorthChart data={chartData} />
       </div>
     </div>
   )

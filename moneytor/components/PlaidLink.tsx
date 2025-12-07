@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { usePlaidLink } from 'react-plaid-link'
 import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/Button'
 
 export default function PlaidLink() {
   const [token, setToken] = useState<string | null>(null)
@@ -39,12 +40,12 @@ export default function PlaidLink() {
   })
 
   return (
-    <button
+    <Button
       onClick={() => open()}
       disabled={!ready}
-      className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
+      variant="primary"
     >
       Connect a Bank Account
-    </button>
+    </Button>
   )
 }
