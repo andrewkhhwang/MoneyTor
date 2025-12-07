@@ -17,7 +17,6 @@ MoneyTor is a modern, personal finance tracker designed to give you complete con
 
 - Node.js 18+
 - A Supabase Project
-- A Plaid Developer Account
 
 ### Installation
 
@@ -34,26 +33,22 @@ MoneyTor is a modern, personal finance tracker designed to give you complete con
     npm install
     ```
 
-3.  **Environment Setup:**
-    Create a `.env.local` file in the root directory and add your credentials:
+3.  **Set up Environment Variables:**
+    Create a `.env.local` file in the root directory and add your Supabase credentials:
 
     ```env
-    NEXT_PUBLIC_SUPABASE_URL="your_supabase_url"
-    NEXT_PUBLIC_SUPABASE_ANON_KEY="your_supabase_anon_key"
-
-    PLAID_CLIENT_ID="your_plaid_client_id"
-    PLAID_SECRET="your_plaid_secret"
-    PLAID_ENV="sandbox" # Change to 'development' or 'production' for real data
+    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
     ```
 
 4.  **Database Setup:**
     Run the provided `supabase_schema.sql` script in your Supabase SQL Editor to create the necessary tables and security policies.
 
-5.  **Run the App:**
+5.  **Run the development server:**
     ```bash
     npm run dev
     ```
-    Open [http://localhost:3000](http://localhost:3000) to start tracking!
+    Open [http://localhost:3000](http://localhost:3000) with your browser.
 
 ## Important Notices
 

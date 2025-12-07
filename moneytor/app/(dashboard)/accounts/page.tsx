@@ -1,7 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
 import { createAccount } from './actions'
-import PlaidLink from '@/components/PlaidLink'
-import SyncButtons from '@/components/SyncButtons'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { formatCurrency } from '@/lib/utils'
@@ -26,8 +24,7 @@ export default async function AccountsPage() {
           <p className="mt-2 text-zinc-400">Manage your connected bank accounts and manual wallets.</p>
         </div>
         <div className="flex gap-2">
-          <SyncButtons />
-          <PlaidLink />
+          {/* Manual sync or other actions can go here */}
         </div>
       </div>
 
